@@ -699,6 +699,21 @@ function getFavicon(url) {
 }
 
 async function fetchMeta(url) {
+  // YouTube
+  try {
+    const u = new URL(url);
+    let videoId = null;
+    if (u.hostname.includes('youtube.com')) videoId = u.searchParams.get('v');
+    if (u.hostname.includes('youtu.be')) videoId = u.pathname.slice(1);
+    if (videoId) {
+      return {
+        title: '',
+        image: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+      };
+    }
+  } catch(e) {}
+
+  // その他
   try {
     const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
     const res = await fetch(proxy);
