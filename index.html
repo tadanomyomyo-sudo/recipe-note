@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>レシピノート</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #f7f3ee;
+    --paper: #fdfaf6;
+    --ink: #1a1714;
+    --ink-light: #6b635a;
+    --ink-faint: #b0a89e;
+    --accent: #c0392b;
+    --accent-light: #f9eceb;
+    --border: #e2dbd4;
+    --card-bg: #ffffff;
+    --tag-bg: #ede8e2;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ===== HEADER ===== */
+  header {
+    background: var(--paper);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .header-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    height: 60px;
+  }
+
+  .logo {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--ink);
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+  }
+
+  .logo span {
+    color: var(--accent);
+  }
+
+  .add-bar {
+    flex: 1;
+    display: flex;
+    gap: 8px;
+  }
+
+  .add-bar input {
+    flex: 1;
+    height: 38px;
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .add-bar input:focus {
+    border-color: var(--accent);
+  }
+
+  .add-bar input::placeholder {
+    color: var(--ink-faint);
+  }
+
+  .btn-add {
+    height: 38px;
+    padding: 0 18px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.2s;
+  }
+
+  .btn-add:hover { opacity: 0.85; }
+  .btn-add:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ===== MAIN ===== */
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  /* ===== FILTERS ===== */
+  .filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 1.75rem;
+    align-items: center;
+  }
+
+  .filter-label {
+    font-size: 12px;
+    color: var(--ink-faint);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-right: 4px;
+  }
+
+  .filter-btn {
+    padding: 5px 14px;
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    background: transparent;
+    color: var(--ink-light);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .filter-btn:hover {
+    border-color: var(--ink-light);
+    color: var(--ink);
+  }
+
+  .filter-btn.active {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: #fff;
+  }
+
+  /* ===== META BAR ===== */
+  .meta-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+  }
+
+  .count-label {
+    font-size: 13px;
+    color: var(--ink-faint);
+  }
+
+  /* ===== CARDS GRID ===== */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.07);
+  }
+
+  .card-thumb {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    background: var(--cream);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-faint);
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .card-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .card-body {
+    padding: 12px 14px 14px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card-source {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--ink-faint);
+    margin-bottom: 5px;
+  }
+
+  .card-source img { border-radius: 2px; }
+
+  .card-title {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--ink);
+    margin-bottom: 8px;
+    flex: 1;
+  }
+
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+
+  .tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    background: var(--tag-bg);
+    color: var(--ink-light);
+    border-radius: 99px;
+  }
+
+  .card-memo {
+    font-size: 12px;
+    color: var(--ink-light);
+    line-height: 1.5;
+    margin-bottom: 10px;
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+    margin-top: auto;
+  }
+
+  .card-date {
+    font-size: 11px;
+    color: var(--ink-faint);
+  }
+
+  .btn-open, .btn-delete {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: background 0.15s;
+  }
+
+  .btn-open { color: var(--ink-light); }
+  .btn-open:hover { background: var(--cream); color: var(--ink); }
+  .btn-delete { color: var(--ink-faint); }
+  .btn-delete:hover { background: var(--accent-light); color: var(--accent); }
+
+  /* ===== EMPTY STATE ===== */
+  .empty {
+    text-align: center;
+    padding: 4rem 0;
+    color: var(--ink-faint);
+  }
+
+  .empty-icon { font-size: 48px; margin-bottom: 1rem; }
+  .empty p { font-size: 15px; line-height: 1.7; }
+
+  /* ===== GAS SETTINGS PANEL ===== */
+  .settings-wrap {
+    position: fixed;
+    inset: 0;
+    background: rgba(26,23,20,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 1rem;
+  }
+
+  .settings-panel {
+    background: var(--paper);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 2rem;
+    max-width: 480px;
+    width: 100%;
+  }
+
+  .settings-panel h2 {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .settings-panel p {
+    font-size: 13px;
+    color: var(--ink-light);
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+  }
+
+  .settings-panel label {
+    display: block;
+    font-size: 12px;
+    color: var(--ink-light);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .settings-panel input {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    margin-bottom: 1.25rem;
+  }
+
+  .settings-panel input:focus { border-color: var(--accent); }
+
+  .btn-save-settings {
+    width: 100%;
+    height: 42px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn-save-settings:hover { opacity: 0.85; }
+
+  /* ===== ADD MODAL ===== */
+  .modal-wrap {
+    position: fixed;
+    inset: 0;
+    background: rgba(26,23,20,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 1rem;
+  }
+
+  .modal {
+    background: var(--paper);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 1.75rem;
+    max-width: 440px;
+    width: 100%;
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1.25rem;
+  }
+
+  .modal-thumb {
+    width: 64px;
+    height: 64px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: var(--cream);
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-faint);
+    font-size: 22px;
+    overflow: hidden;
+  }
+
+  .modal-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+  .modal-source-title { flex: 1; }
+  .modal-source { font-size: 12px; color: var(--ink-faint); margin-bottom: 4px; }
+  .modal-title-display {
+    font-family: 'Shippori Mincho', serif;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--ink);
+  }
+
+  .modal label {
+    display: block;
+    font-size: 12px;
+    color: var(--ink-light);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+    margin-top: 14px;
+  }
+
+  .modal input, .modal textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+  }
+
+  .modal input:focus, .modal textarea:focus { border-color: var(--accent); }
+  .modal textarea { resize: vertical; line-height: 1.5; }
+
+  .modal-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 1.25rem;
+  }
+
+  .btn-cancel {
+    flex: 1;
+    height: 40px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    color: var(--ink-light);
+    transition: background 0.15s;
+  }
+  .btn-cancel:hover { background: var(--cream); }
+
+  .btn-save {
+    flex: 2;
+    height: 40px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn-save:hover { opacity: 0.85; }
+  .btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* ===== TOAST ===== */
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.3s, transform 0.3s;
+    z-index: 200;
+    pointer-events: none;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ===== LOADING ===== */
+  .spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ===== SETTINGS GEAR ===== */
+  .btn-gear {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    width: 38px;
+    height: 38px;
+    cursor: pointer;
+    color: var(--ink-light);
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    flex-shrink: 0;
+  }
+  .btn-gear:hover { background: var(--cream); color: var(--ink); }
+
+  @media (max-width: 600px) {
+    main { padding: 1rem; }
+    .logo { font-size: 17px; }
+    header { padding: 0 1rem; }
+    .cards { grid-template-columns: 1fr 1fr; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">レシピ<span>ノート</span></div>
+    <div class="add-bar">
+      <input id="url-input" type="url" placeholder="レシピのURLを貼り付け…" />
+      <button class="btn-add" id="add-btn">追加</button>
+    </div>
+    <button class="btn-gear" id="gear-btn" title="設定">⚙</button>
+  </div>
+</header>
+
+<main>
+  <div class="filters" id="filter-bar">
+    <span class="filter-label">絞り込み</span>
+    <button class="filter-btn active" data-filter="all">すべて</button>
+    <button class="filter-btn" data-filter="cookpad">クックパッド</button>
+    <button class="filter-btn" data-filter="rakuten">楽天レシピ</button>
+    <button class="filter-btn" data-filter="kurashiru">クラシル</button>
+    <button class="filter-btn" data-filter="delishkitchen">デリッシュキッチン</button>
+    <button class="filter-btn" data-filter="other">その他</button>
+  </div>
+
+  <div class="meta-bar">
+    <span class="count-label" id="count-label">0 件</span>
+  </div>
+
+  <div class="cards" id="cards"></div>
+  <div class="empty" id="empty" style="display:none">
+    <div class="empty-icon">🍳</div>
+    <p>まだレシピが保存されていません<br>URLを貼り付けて追加してみてください</p>
+  </div>
+</main>
+
+<!-- GAS設定パネル -->
+<div class="settings-wrap" id="settings-wrap">
+  <div class="settings-panel">
+    <h2>はじめに設定</h2>
+    <p>GASのウェブアプリURLを入力してください。<br>GASでデプロイした後に表示されるURLです。</p>
+    <label>GAS ウェブアプリURL</label>
+    <input id="gas-url-input" type="url" placeholder="https://script.google.com/macros/s/…/exec" />
+    <button class="btn-save-settings" id="save-settings-btn">保存して始める</button>
+  </div>
+</div>
+
+<!-- 追加モーダル -->
+<div class="modal-wrap" id="modal-wrap" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-thumb" id="m-thumb">📷</div>
+      <div class="modal-source-title">
+        <div class="modal-source" id="m-source"></div>
+        <div class="modal-title-display" id="m-title-display"></div>
+      </div>
+    </div>
+    <label>タイトルを編集</label>
+    <input id="m-title" type="text" />
+    <label>タグ（カンマ区切り）</label>
+    <input id="m-tags" type="text" placeholder="夕食, 和食, 簡単" />
+    <label>メモ</label>
+    <textarea id="m-memo" rows="2" placeholder="気になった点など…"></textarea>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="modal-cancel">キャンセル</button>
+      <button class="btn-save" id="modal-save">保存する</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SOURCE_MAP = {
+  'cookpad.com':           { label: 'クックパッド',      key: 'cookpad' },
+  'recipe.rakuten.co.jp':  { label: '楽天レシピ',        key: 'rakuten' },
+  'kurashiru.com':         { label: 'クラシル',          key: 'kurashiru' },
+  'delishkitchen.tv':      { label: 'デリッシュキッチン', key: 'delishkitchen' },
+};
+
+let GAS_URL = localStorage.getItem('recipe_gas_url') || '';
+let recipes = [];
+let pending = null;
+let currentFilter = 'all';
+
+// ===== GAS SETTINGS =====
+const settingsWrap = document.getElementById('settings-wrap');
+const gasInput = document.getElementById('gas-url-input');
+
+function checkSettings() {
+  if (GAS_URL) {
+    settingsWrap.style.display = 'none';
+    loadRecipes();
+  } else {
+    settingsWrap.style.display = 'flex';
+  }
+}
+
+document.getElementById('save-settings-btn').addEventListener('click', () => {
+  const url = gasInput.value.trim();
+  if (!url.startsWith('https://')) return toast('正しいURLを入力してください');
+  GAS_URL = url;
+  localStorage.setItem('recipe_gas_url', url);
+  settingsWrap.style.display = 'none';
+  loadRecipes();
+});
+
+document.getElementById('gear-btn').addEventListener('click', () => {
+  gasInput.value = GAS_URL;
+  settingsWrap.style.display = 'flex';
+});
+
+// ===== GAS API =====
+async function gasCall(payload) {
+  const res = await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return res.json();
+}
+
+async function loadRecipes() {
+  try {
+    const data = await gasCall({ action: 'getAll' });
+    recipes = data.recipes || [];
+    render();
+  } catch(e) {
+    toast('データの読み込みに失敗しました');
+  }
+}
+
+// ===== META FETCH =====
+function getSource(url) {
+  try {
+    const host = new URL(url).hostname.replace('www.', '');
+    for (const [domain, info] of Object.entries(SOURCE_MAP)) {
+      if (host.includes(domain)) return info;
+    }
+  } catch(e) {}
+  return { label: 'その他', key: 'other' };
+}
+
+function getFavicon(url) {
+  try {
+    return `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=16`;
+  } catch(e) { return ''; }
+}
+
+async function fetchMeta(url) {
+  try {
+    const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    const res = await fetch(proxy);
+    const data = await res.json();
+    const doc = new DOMParser().parseFromString(data.contents || '', 'text/html');
+    return {
+      title: (doc.querySelector('meta[property="og:title"]')?.content || doc.querySelector('title')?.textContent || '').trim(),
+      image: doc.querySelector('meta[property="og:image"]')?.content || '',
+    };
+  } catch(e) { return { title: '', image: '' }; }
+}
+
+// ===== ADD FLOW =====
+const addBtn = document.getElementById('add-btn');
+const urlInput = document.getElementById('url-input');
+
+async function startAdd() {
+  const url = urlInput.value.trim();
+  if (!url) return;
+  if (!GAS_URL) return toast('先にGAS URLを設定してください（⚙ボタン）');
+
+  addBtn.disabled = true;
+  addBtn.innerHTML = '<span class="spinner"></span>取得中…';
+
+  const [meta, source] = await Promise.all([fetchMeta(url), Promise.resolve(getSource(url))]);
+  const favicon = getFavicon(url);
+
+  pending = { url, title: meta.title, image: meta.image, source: source.label, sourceKey: source.key, favicon, tags: [], memo: '' };
+
+  // populate modal
+  document.getElementById('m-source').textContent = source.label;
+  document.getElementById('m-title-display').textContent = meta.title || url;
+  document.getElementById('m-title').value = meta.title;
+  document.getElementById('m-tags').value = '';
+  document.getElementById('m-memo').value = '';
+  const thumb = document.getElementById('m-thumb');
+  if (meta.image) {
+    thumb.innerHTML = `<img src="${meta.image}" alt="" onerror="this.parentElement.textContent='📷'">`;
+  } else {
+    thumb.textContent = '📷';
+  }
+
+  document.getElementById('modal-wrap').style.display = 'flex';
+  addBtn.disabled = false;
+  addBtn.textContent = '追加';
+  urlInput.value = '';
+}
+
+addBtn.addEventListener('click', startAdd);
+urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') startAdd(); });
+
+document.getElementById('modal-cancel').addEventListener('click', () => {
+  document.getElementById('modal-wrap').style.display = 'none';
+  pending = null;
+});
+
+document.getElementById('modal-save').addEventListener('click', async () => {
+  if (!pending) return;
+  const saveBtn = document.getElementById('modal-save');
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = '<span class="spinner"></span>保存中…';
+
+  pending.title = document.getElementById('m-title').value.trim() || pending.title;
+  pending.tags = document.getElementById('m-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+  pending.memo = document.getElementById('m-memo').value.trim();
+
+  try {
+    const result = await gasCall({ action: 'add', recipe: pending });
+    if (result.success) {
+      document.getElementById('modal-wrap').style.display = 'none';
+      pending = null;
+      toast('保存しました ✓');
+      await loadRecipes();
+    } else {
+      toast('保存に失敗しました');
+    }
+  } catch(e) {
+    toast('通信エラーが発生しました');
+  }
+  saveBtn.disabled = false;
+  saveBtn.textContent = '保存する';
+});
+
+// ===== DELETE =====
+async function deleteRecipe(id) {
+  if (!confirm('このレシピを削除しますか？')) return;
+  try {
+    await gasCall({ action: 'delete', id });
+    toast('削除しました');
+    await loadRecipes();
+  } catch(e) { toast('削除に失敗しました'); }
+}
+
+// ===== FILTER =====
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    render();
+  });
+});
+
+// ===== RENDER =====
+function formatDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function render() {
+  const filtered = currentFilter === 'all' ? recipes : recipes.filter(r => r.sourceKey === currentFilter);
+  const cards = document.getElementById('cards');
+  const empty = document.getElementById('empty');
+  const count = document.getElementById('count-label');
+
+  count.textContent = `${filtered.length} 件`;
+
+  if (!filtered.length) {
+    cards.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  cards.innerHTML = filtered.map(r => `
+    <div class="card">
+      <div class="card-thumb">
+        ${r.image
+          ? `<img src="${r.image}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<span style=font-size:32px>🍳</span>'">`
+          : '<span style="font-size:32px">🍳</span>'}
+      </div>
+      <div class="card-body">
+        <div class="card-source">
+          ${r.favicon ? `<img src="${r.favicon}" width="12" height="12" alt="">` : ''}
+          ${r.source || 'その他'}
+        </div>
+        <div class="card-title">${r.title || '（タイトルなし）'}</div>
+        ${r.tags && r.tags.length ? `<div class="card-tags">${r.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>` : ''}
+        ${r.memo ? `<p class="card-memo">${r.memo}</p>` : ''}
+        <div class="card-footer">
+          <span class="card-date">${formatDate(r.addedAt)}</span>
+          <div style="display:flex;gap:4px">
+            <button class="btn-open" onclick="window.open('${r.url}','_blank')" title="開く">↗</button>
+            <button class="btn-delete" onclick="deleteRecipe('${r.id}')" title="削除">✕</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ===== TOAST =====
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ===== INIT =====
+checkSettings();
+</script>
+</body>
+</html>
